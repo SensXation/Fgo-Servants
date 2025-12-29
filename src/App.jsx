@@ -106,7 +106,7 @@ const App = () => {
 
     try {
       // 2. Send to our local Backend
-      const response = await fetch('http://localhost:5000/translate-servant', {
+      const response = await fetch('https://chaldea-db.vercel.app/api/hello', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(servant)
