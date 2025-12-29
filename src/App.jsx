@@ -102,7 +102,7 @@ const App = () => {
 
     try {
       // Fetch English Data from Vercel
-      const response = await fetch(`https://chaldea-db.vercel.app/api/servant/${servant.collectionNo}`);
+      const response = await fetch(`https://Fgo-servants.vercel.app/api/servant/${servant.collectionNo}`);
 
       if (response.ok) {
         const translatedData = await response.json();
