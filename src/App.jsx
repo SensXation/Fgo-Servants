@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import './App.css';
 
-
 const CLASS_ICONS = {
   saber: "icons/Saber.webp",
   archer: "icons/Archer.webp",
@@ -25,30 +24,33 @@ const App = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedClass, setSelectedClass] = useState("ALL");
+  
+  // New State for the Modal
   const [selectedServant, setSelectedServant] = useState(null);
+  const [isTranslating, setIsTranslating] = useState(false);
 
   useEffect(() => {
-    fetch("https://api.atlasacademy.io/export/JP/nice_servant_lang_en.json")
-      .then((res) => res.json())
-      .then((data) => {
-        // 1. FILTER: Keep Standard + Beasts + U-Olga
+    // Fetch Basic Data
+    const fetchRequest = fetch("https://api.atlasacademy.io/export/JP/nice_servant_lang_en.json")
+      .then((res) => res.json());
+
+    const delayTimer = new Promise(resolve => setTimeout(resolve, 2500));
+
+    Promise.all([fetchRequest, delayTimer])
+      .then(([data]) => {
         let cleanList = data.filter(s => {
           if (!s.collectionNo || s.collectionNo === 0) return false;
           const isStandard = s.type === "heroine" || s.type === "normal";
-          // Explicitly keep U-Olga (444) and Eresh (417)
           const isSpecial = s.collectionNo === 444 || s.collectionNo === 417; 
           const isBeast = s.className.toLowerCase() === "beast";
           return isStandard || isBeast || isSpecial; 
         });
 
-        // 2. DATA PATCHING (Fix Classes Only)
         cleanList = cleanList.map(s => {
           if (s.collectionNo === 444) return { ...s, className: "beast" }; 
           if (s.collectionNo === 417) return { ...s, className: "beast" };
           return s;
         });
-
-        // (Paladin Mash removed as requested)
 
         cleanList.sort((a, b) => a.collectionNo - b.collectionNo);
         setServants(cleanList);
@@ -75,13 +77,14 @@ const App = () => {
   const capitalize = (s) => s ? s.charAt(0).toUpperCase() + s.slice(1) : "";
 
   // --- TRAIT CLEANER ---
+  // (We can keep this for formatting English traits cleanly)
   const formatTrait = (rawName) => {
     const IGNORED = [
       "servant", "canbeinbattle", "unknown", "fivestarservant", 
       "fourstarservant", "threestarservant", "twostarservant", "onestarservant",
       "costumeowning"
     ];
-    if (IGNORED.includes(rawName.toLowerCase())) return null;
+    if (!rawName || IGNORED.includes(rawName.toLowerCase())) return null;
 
     let name = rawName
       .replace(/^gender/i, '')       
@@ -93,23 +96,50 @@ const App = () => {
     return name.charAt(0).toUpperCase() + name.slice(1).trim();
   };
 
-  const handlePreviewClick = (servant) => {
-    setSelectedServant(servant);
-    setSearchTerm("");
+  // --- HANDLE CLICK WITH BACKEND TRANSLATION ---
+  const handleServantClick = async (servant) => {
+    // 1. Set the servant immediately (displays raw data first)
+    // OR set loading state if you want to wait. 
+    // Let's show a loading state for better UX.
+    setSelectedServant(servant); // Show modal immediately with existing data
+    setIsTranslating(true);      // Turn on "Translating..." indicator
+
+    try {
+      // 2. Send to our local Backend
+      const response = await fetch('http://localhost:5000/translate-servant', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(servant)
+      });
+
+      if (response.ok) {
+        const translatedServant = await response.json();
+        // 3. Update the modal with the new English data
+        setSelectedServant(translatedServant);
+      } else {
+        console.error("Translation backend failed");
+      }
+    } catch (error) {
+      console.error("Could not connect to translation server", error);
+    } finally {
+      setIsTranslating(false);
+    }
   };
-       
+
+  const getSkillIcon = (iconUrl) => {
+      return iconUrl ? iconUrl : "https://static.atlasacademy.io/JP/Items/5.png";
+  };
 
   if (loading) return (
     <div className="loading-screen">
-      <div className="loading-text">Loading Chaldea Database...</div>
-      <div className="loading-bar-container">
-        <div className="loading-bar-fill"></div>
-      </div>
+      <div className="loading-text">Loading Chaldea Database</div>
+      <div className="loading-bar-container"><div className="loading-bar-fill"></div></div>
     </div>
   );
 
   return (
     <div className="app-container">
+      {/* Header and Filter sections remain the same... */}
       <header className="main-header">
         <div className="logo-section"><h1>Chaldea Database</h1></div>
         <div className="search-section">
@@ -125,7 +155,7 @@ const App = () => {
               <div className="search-dropdown">
                 {previewList.length > 0 ? (
                   previewList.slice(0, 8).map((servant) => (
-                    <div key={servant.id} className="dropdown-item" onClick={() => handlePreviewClick(servant)}>
+                    <div key={servant.id} className="dropdown-item" onClick={() => handleServantClick(servant)}>
                       <img src={servant.extraAssets?.faces?.ascension?.[4] || servant.extraAssets?.faces?.ascension?.[1]} alt="icon" />
                       <div className="dropdown-text">
                         <span className="name">{servant.name}</span>
@@ -158,9 +188,13 @@ const App = () => {
 
       <div className="servant-grid">
         {filteredServants.map((servant) => (
-          <div key={servant.id} className="servant-card" onClick={() => setSelectedServant(servant)}>
+          <div key={servant.id} className="servant-card" onClick={() => handleServantClick(servant)}>
             <div className="card-face">
-              <img src={servant.extraAssets?.faces?.ascension?.[4] || servant.extraAssets?.faces?.ascension?.[1] || "https://static.atlasacademy.io/JP/Faces/1001000.png"} alt={servant.name} loading="lazy" />
+              <img 
+                src={servant.extraAssets?.faces?.ascension?.[4] || servant.extraAssets?.faces?.ascension?.[1] || "https://static.atlasacademy.io/JP/Faces/1001000.png"} 
+                alt={servant.name} 
+                loading="lazy" 
+              />
             </div>
             <div className="card-info">
               <div className="card-name">{servant.name}</div>
@@ -176,15 +210,20 @@ const App = () => {
         <div className="modal-overlay" onClick={() => setSelectedServant(null)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <button className="close-btn" onClick={() => setSelectedServant(null)}>×</button>
+            
             <div className="detail-header">
               <div className="servant-portrait">
                 <img src={selectedServant.extraAssets?.charaGraph?.ascension?.[4] || selectedServant.extraAssets?.charaGraph?.ascension?.[3] || selectedServant.extraAssets?.charaGraph?.ascension?.[1]} alt="Portrait" />
               </div>
               <div className="servant-info">
-                <h2>{selectedServant.name} <span className="rarity">{"★".repeat(selectedServant.rarity)}</span></h2>
+                <h2>
+                  {selectedServant.name} 
+                  <span className="rarity">{"★".repeat(selectedServant.rarity)}</span>
+                  {isTranslating && <span style={{fontSize: "0.5em", marginLeft: "10px", color: "#00ff00"}}>(Translating...)</span>}
+                </h2>
                 <p className="jp-name">JP Name: {selectedServant.originalName}</p>
                 <div className="stats-grid">
-                  <div className="stat-box"><strong>ID:</strong> {selectedServant.collectionNo > 1000 ? "N/A" : Math.floor(selectedServant.collectionNo)}</div>
+                  <div className="stat-box"><strong>ID:</strong> {Math.floor(selectedServant.collectionNo)}</div>
                   <div className="stat-box"><strong>Class:</strong> {capitalize(selectedServant.className)}</div>
                   <div className="stat-box"><strong>ATK:</strong> {selectedServant.atkMax}</div>
                   <div className="stat-box"><strong>HP:</strong> {selectedServant.hpMax}</div>
@@ -201,36 +240,47 @@ const App = () => {
                     })}
                   </div>
                 </div>
-
               </div>
             </div>
+
             <div className="skills-section">
               <h3>Active Skills</h3>
               <div className="skill-row">
                 {selectedServant.skills?.map((skill, idx) => (
                   <div key={idx} className="skill-unit">
-                    <img src={skill.icon} alt={skill.name} />
-                    <div className="skill-text"><h4>{skill.name}</h4><p>{skill.detail}</p></div>
+                    <img src={getSkillIcon(skill.icon)} alt={skill.name} />
+                    <div className="skill-text">
+                        <h4>{skill.name}</h4>
+                        <p>{skill.detail}</p>
+                    </div>
                   </div>
                 ))}
               </div>
+
               <h3>Passive Skills</h3>
               <div className="skill-row">
                 {selectedServant.classPassive?.map((skill, idx) => (
                   <div key={idx} className="skill-unit passive">
-                    <img src={skill.icon} alt={skill.name} />
-                    <div className="skill-text"><h4>{skill.name}</h4><p>{skill.detail}</p></div>
+                    <img src={getSkillIcon(skill.icon)} alt={skill.name} />
+                    <div className="skill-text">
+                        <h4>{skill.name}</h4>
+                        <p>{skill.detail}</p>
+                    </div>
                   </div>
                 ))}
               </div>
+
               <h3>Append Skills</h3>
               <div className="skill-row">
-                {selectedServant.appendPassive?.length > 0 ? (
+                {selectedServant.appendPassive && selectedServant.appendPassive.length > 0 ? (
                    selectedServant.appendPassive.map((skill, idx) => (
-                    <div key={idx} className="skill-unit append">
-                      <img src={skill.icon} alt={skill.name} />
-                      <div className="skill-text"><h4>{skill.name}</h4><p>{skill.detail}</p></div>
-                    </div>
+                      <div key={idx} className="skill-unit append">
+                        <img src={getSkillIcon(skill.icon)} alt={skill.name} />
+                        <div className="skill-text">
+                            <h4>{skill.name}</h4>
+                            <p>{skill.detail}</p>
+                        </div>
+                      </div>
                   ))
                 ) : (<p className="no-skill">No Append Skills available.</p>)}
               </div>
