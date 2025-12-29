@@ -10,34 +10,41 @@ app.get('/api/hello', (req, res) => res.json({ message: 'Backend Connected' }));
 
 app.get('/api/servant/:id', async (req, res) => {
     const servantId = req.params.id;
+    let data = null;
+
     try {
-        // [FIX 1] Use JP Region + Force English Language
-        // This ensures even new JP servants (like Hakuno) get English text where available
-        const response = await axios.get(`https://api.atlasacademy.io/nice/JP/servant/${servantId}?lang=en`);
-        const data = response.data;
-
-        if (data) {
-            // [FIX 2] "Unwrap" the Append Skills
-            // The API sends Append Skills wrapped in a "skill" object.
-            // We map through them to pull out ONLY the skill data.
-            const cleanAppends = data.appendPassive 
-                ? data.appendPassive.map(slot => slot.skill) 
-                : [];
-
-            res.json({
-                name: data.name,
-                className: data.className,
-                skills: data.skills,             // Active Skills (Translated by ?lang=en)
-                np: data.noblePhantasms,         // NPs (Translated)
-                classPassive: data.classPassive, // Passive Skills (Translated)
-                appendPassive: cleanAppends      // [FIXED] Now Unwrapped & Translated
-            });
-        } else {
-            res.status(404).json({ error: "Servant not found" });
+        // [STEP 1] Try fetching from NA Database first
+        // This guarantees perfect English for everyone who exists in NA.
+        const response = await axios.get(`https://api.atlasacademy.io/nice/NA/servant/${servantId}`);
+        data = response.data;
+    } catch (naError) {
+        // [STEP 2] If NA fails (404), fetch from JP Database
+        // This catches JP-only servants (like Archetype Earth, Draco, etc.)
+        try {
+            console.log(`Servant ${servantId} not in NA, trying JP...`);
+            const jpResponse = await axios.get(`https://api.atlasacademy.io/nice/JP/servant/${servantId}?lang=en`);
+            data = jpResponse.data;
+        } catch (jpError) {
+            return res.status(404).json({ error: "Servant not found" });
         }
-    } catch (error) {
-        console.error("Error fetching servant:", error.message);
-        res.status(500).json({ error: "Failed to fetch data" });
+    }
+
+    if (data) {
+        // [FIX] "Unwrap" Append Skills
+        // Both NA and JP APIs wrap Append Skills inside a "skill" object.
+        // We dig it out so your Frontend can read .name and .detail directly.
+        const cleanAppends = data.appendPassive 
+            ? data.appendPassive.map(slot => slot.skill ? slot.skill : slot) 
+            : [];
+
+        res.json({
+            name: data.name,
+            className: data.className,
+            skills: data.skills,             // Active Skills
+            np: data.noblePhantasms,         // NPs
+            classPassive: data.classPassive, // Passive Skills
+            appendPassive: cleanAppends      // Append Skills (Cleaned)
+        });
     }
 });
 
