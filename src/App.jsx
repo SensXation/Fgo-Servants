@@ -77,7 +77,6 @@ const App = () => {
   const capitalize = (s) => s ? s.charAt(0).toUpperCase() + s.slice(1) : "";
 
   // --- TRAIT CLEANER ---
-  // (We can keep this for formatting English traits cleanly)
   const formatTrait = (rawName) => {
     const IGNORED = [
       "servant", "canbeinbattle", "unknown", "fivestarservant", 
@@ -96,13 +95,13 @@ const App = () => {
     return name.charAt(0).toUpperCase() + name.slice(1).trim();
   };
 
+  // --- FIXED HANDLE CLICK ---
   const handleServantClick = async (servant) => {
     setSelectedServant(servant);
     setIsTranslating(true);
 
     try {
-      // USE YOUR REAL VERCEL URL HERE
-      // Note: We use GET, not POST
+      // Using the URL you confirmed is correct
       const response = await fetch(`https://Fgo-Servants.vercel.app/api/servant/${servant.collectionNo}`);
 
       if (response.ok) {
@@ -113,23 +112,9 @@ const App = () => {
             ...prev,
             name: translatedData.name,
             skills: translatedData.skills,
-            noblePhantasms: translatedData.np, // Make sure your backend sends 'np'
+            noblePhantasms: translatedData.np,
             className: translatedData.className
         }));
-      } else {
-        console.error("Translation backend failed");
-      }
-    } catch (error) {
-      console.error("Could not connect to translation server", error);
-    } finally {
-      setIsTranslating(false);
-    }
-  };
-
-      if (response.ok) {
-        const translatedServant = await response.json();
-        // 3. Update the modal with the new English data
-        setSelectedServant(translatedServant);
       } else {
         console.error("Translation backend failed");
       }
@@ -153,7 +138,6 @@ const App = () => {
 
   return (
     <div className="app-container">
-      {/* Header and Filter sections remain the same... */}
       <header className="main-header">
         <div className="logo-section"><h1>Chaldea Database</h1></div>
         <div className="search-section">
