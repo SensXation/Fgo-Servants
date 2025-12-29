@@ -316,19 +316,22 @@ html, body {
   }
 
   .loading-screen {
-    text-align: center;
     padding: 0 20px;
+    text-align: center;
+    justify-content: center;
   }
 
   .loading-text {
-    font-size: 1.2rem;
+    font-size: 1.0rem;
+    text-align: center;
     margin-left: 0;
     width: 100%;
     display: block;
+    letter-spacing: 1px;
   }
 
   .loading-bar-container {
     margin: 0 auto;
-    width: 80%;
+    max-width: 150px;
   }
 }
