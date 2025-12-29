@@ -95,17 +95,19 @@ const App = () => {
     return name.charAt(0).toUpperCase() + name.slice(1).trim();
   };
 
-  // --- FIXED HANDLE CLICK ---
+  // --- HANDLE CLICK (Fixed Translation Merge) ---
   const handleServantClick = async (servant) => {
     setSelectedServant(servant);
     setIsTranslating(true);
 
     try {
-      const response = await fetch(`https://Fgo-Servants.vercel.app/api/servant/${servant.collectionNo}`);
+      // Fetch English Data from Vercel
+      const response = await fetch(`https://chaldea-db.vercel.app/api/servant/${servant.collectionNo}`);
 
       if (response.ok) {
         const translatedData = await response.json();
         
+        // Merge the new English data
         setSelectedServant(prev => ({
             ...prev,
             name: translatedData.name,
@@ -113,7 +115,7 @@ const App = () => {
             noblePhantasms: translatedData.np,
             className: translatedData.className,
             classPassive: translatedData.classPassive, 
-            appendPassive: translatedData.appendPassive
+            appendPassive: translatedData.appendPassive // <--- This ensures Append Skills update
         }));
       } else {
         console.error("Translation backend failed");
@@ -217,6 +219,7 @@ const App = () => {
                 <h2>
                   {selectedServant.name} 
                   <span className="rarity">{"★".repeat(selectedServant.rarity)}</span>
+                  {/* Removed the (Translating...) text here */}
                 </h2>
                 <p className="jp-name">JP Name: {selectedServant.originalName}</p>
                 <div className="stats-grid">
