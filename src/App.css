@@ -331,9 +331,10 @@ html, body {
   }
 
   .loading-bar-container {
-    width: 50%;
-    margin: 0 auto;
+    width: 180px;
+    margin-left: auto !important;
+    margin-right: auto !important;
     margin-top: 15px;
-    max-width: 180px;
+    display: block;
   }
 }
