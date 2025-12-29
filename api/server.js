@@ -11,14 +11,15 @@ app.get('/api/hello', (req, res) => res.json({ message: 'Backend Connected' }));
 app.get('/api/servant/:id', async (req, res) => {
     const servantId = req.params.id;
     try {
-        // 1. Fetch JP data with English Language flag
+        // [FIX 1] Use JP Region + Force English Language
+        // This ensures even new JP servants (like Hakuno) get English text where available
         const response = await axios.get(`https://api.atlasacademy.io/nice/JP/servant/${servantId}?lang=en`);
         const data = response.data;
 
         if (data) {
-            // --- THE FIX IS HERE ---
-            // The API wraps append skills inside a "skill" object.
-            // We map through it to "unwrap" it so your Frontend can read it.
+            // [FIX 2] "Unwrap" the Append Skills
+            // The API sends Append Skills wrapped in a "skill" object.
+            // We map through them to pull out ONLY the skill data.
             const cleanAppends = data.appendPassive 
                 ? data.appendPassive.map(slot => slot.skill) 
                 : [];
@@ -26,10 +27,10 @@ app.get('/api/servant/:id', async (req, res) => {
             res.json({
                 name: data.name,
                 className: data.className,
-                skills: data.skills,
-                np: data.noblePhantasms,
-                classPassive: data.classPassive,
-                appendPassive: cleanAppends 
+                skills: data.skills,             // Active Skills (Translated by ?lang=en)
+                np: data.noblePhantasms,         // NPs (Translated)
+                classPassive: data.classPassive, // Passive Skills (Translated)
+                appendPassive: cleanAppends      // [FIXED] Now Unwrapped & Translated
             });
         } else {
             res.status(404).json({ error: "Servant not found" });
