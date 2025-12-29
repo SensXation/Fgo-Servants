@@ -63,6 +63,7 @@ cd Fgo-Servants
 ```
 
 🤝 Credits
+
 Data provided by Atlas Academy.
 
 Game assets property of Lasengle / TYPE-MOON.
