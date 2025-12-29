@@ -57,3 +57,10 @@ If you want to run this project locally:
 ```bash
 git clone [https://github.com/SensXation/Fgo-Servants.git](https://github.com/SensXation/Fgo-Servants.git)
 cd Fgo-Servants
+
+
+
+🤝 Credits
+Data provided by Atlas Academy.
+
+Game assets property of Lasengle / TYPE-MOON.
