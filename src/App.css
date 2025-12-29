@@ -314,4 +314,21 @@ html, body {
     margin-bottom: 5px;
     margin-right: 0;
   }
+
+  .loading-screen {
+    text-align: center;
+    padding: 0 20px;
+  }
+
+  .loading-text {
+    font-size: 1.2rem;
+    margin-left: 0;
+    width: 100%;
+    display: block;
+  }
+
+  .loading-bar-container {
+    margin: 0 auto;
+    width: 80%;
+  }
 }
