@@ -96,18 +96,16 @@ const App = () => {
   };
 
   // --- HANDLE CLICK (Fixed Translation Merge) ---
-  const handleServantClick = async (servant) => {
+ const handleServantClick = async (servant) => {
     setSelectedServant(servant);
     setIsTranslating(true);
 
     try {
-      // Fetch English Data from Vercel
-      const response = await fetch(`https://Fgo-servants.vercel.app/api/servant/${servant.collectionNo}`);
+      const response = await fetch(`https://Fgo-Servants.vercel.app/api/servant/${servant.collectionNo}`);
 
       if (response.ok) {
         const translatedData = await response.json();
         
-        // Merge the new English data
         setSelectedServant(prev => ({
             ...prev,
             name: translatedData.name,
@@ -115,7 +113,8 @@ const App = () => {
             noblePhantasms: translatedData.np,
             className: translatedData.className,
             classPassive: translatedData.classPassive, 
-            appendPassive: translatedData.appendPassive // <--- This ensures Append Skills update
+            // [FIX] Use empty array as fallback if missing
+            appendPassive: translatedData.appendPassive || [] 
         }));
       } else {
         console.error("Translation backend failed");
