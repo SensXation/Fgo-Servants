@@ -333,6 +333,7 @@ html, body {
   .loading-bar-container {
     width: 50%;
     margin: 0 auto;
-    max-width: 150px;
+    margin-top: 15px;
+    max-width: 180px;
   }
 }
