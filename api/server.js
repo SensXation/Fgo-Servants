@@ -5,15 +5,17 @@ const app = express();
 
 app.use(cors());
 
-// --- HELPER: Google Translate Function ---
+// --- HELPER 1: Google Translate Function ---
 async function translateText(text) {
     if (!text || text.trim() === "") return text;
-    if (/^[\x00-\x7F]*$/.test(text)) return text; // Skip if already English
+    // If text is already mostly English (ASCII), skip translation to save speed
+    if (/^[\x00-\x7F]*$/.test(text)) return text;
 
     try {
         const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=ja&tl=en&dt=t&q=${encodeURIComponent(text)}`;
         const res = await axios.get(url);
-        if (res.data && res.data[0] && res.data[0][0]) {
+        // Google returns data in a nested array: [[["Translated Text", "Original", ...]]]
+        if (res.data && res.data[0]) {
             return res.data[0].map(item => item[0]).join(""); 
         }
         return text;
@@ -23,23 +25,25 @@ async function translateText(text) {
     }
 }
 
-// --- HELPER: Clean & Translate ---
-async function processSkills(skillsList) {
+// --- HELPER 2: Clean & Translate Skills ---
+async function processSkills(skillsList, shouldTranslate) {
     if (!skillsList) return [];
     
     return Promise.all(skillsList.map(async (skill) => {
-        const realSkill = skill.skill ? skill.skill : skill; // Unwrap if needed
+        // Unwrap Append Skills if they are wrapped in a "skill" object
+        const realSkill = skill.skill ? skill.skill : skill; 
         
-        // 1. Get the text (Translate if needed)
         let detail = realSkill.detail;
-        
-        // (Optional: You can enable translation here if you want it for JP)
-        // detail = await translateText(detail); 
 
-        // 2. THE FIX: REMOVE PLACEHOLDERS like {{1:Value:m}}
-        // We replace them with '?' so it says "Charge NP by ?%" instead of ugly code.
+        // 1. CLEAN: Remove the ugly {{...}} variables FIRST
+        // We replace them with '?' (e.g., "Charge NP by ?%")
         if (detail) {
             detail = detail.replace(/\{\{.*?\}\}/g, '?'); 
+        }
+        
+        // 2. TRANSLATE: Only if the servant came from JP
+        if (shouldTranslate && detail) {
+            detail = await translateText(detail);
         }
 
         return {
@@ -55,28 +59,32 @@ app.get('/api/hello', (req, res) => res.json({ message: 'Backend Connected' }));
 app.get('/api/servant/:id', async (req, res) => {
     const servantId = req.params.id;
     let data = null;
+    let isJpSource = false;
 
     try {
-        // Try NA First
+        // Step A: Try NA (Official English)
         const response = await axios.get(`https://api.atlasacademy.io/nice/NA/servant/${servantId}`);
         data = response.data;
     } catch (naError) {
-        // Fallback to JP
+        // Step B: Fallback to JP (Japanese)
         try {
+            console.log(`Servant ${servantId} not in NA. Fetching JP...`);
             const jpResponse = await axios.get(`https://api.atlasacademy.io/nice/JP/servant/${servantId}?lang=en`);
             data = jpResponse.data;
+            isJpSource = true; // Mark as JP so we know to translate it later
         } catch (jpError) {
             return res.status(404).json({ error: "Servant not found" });
         }
     }
 
     if (data) {
-        // Clean all the skill lists
+        // Process all skills (Active, NP, Passive, Append)
+        // We pass 'isJpSource' to tell the helper whether to run Google Translate
         const [cleanSkills, cleanNp, cleanPassive, cleanAppend] = await Promise.all([
-            processSkills(data.skills),
-            processSkills(data.noblePhantasms),
-            processSkills(data.classPassive),
-            processSkills(data.appendPassive)
+            processSkills(data.skills, isJpSource),
+            processSkills(data.noblePhantasms, isJpSource),
+            processSkills(data.classPassive, isJpSource),
+            processSkills(data.appendPassive, isJpSource)
         ]);
 
         res.json({
