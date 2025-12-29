@@ -113,7 +113,7 @@ const App = () => {
             noblePhantasms: translatedData.np,
             className: translatedData.className,
             classPassive: translatedData.classPassive, 
-            // [FIX] Use empty array as fallback if missing
+            
             appendPassive: translatedData.appendPassive || [] 
         }));
       } else {
