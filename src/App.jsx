@@ -96,21 +96,35 @@ const App = () => {
     return name.charAt(0).toUpperCase() + name.slice(1).trim();
   };
 
-  // --- HANDLE CLICK WITH BACKEND TRANSLATION ---
   const handleServantClick = async (servant) => {
-    // 1. Set the servant immediately (displays raw data first)
-    // OR set loading state if you want to wait. 
-    // Let's show a loading state for better UX.
-    setSelectedServant(servant); // Show modal immediately with existing data
-    setIsTranslating(true);      // Turn on "Translating..." indicator
+    setSelectedServant(servant);
+    setIsTranslating(true);
 
     try {
-      // 2. Send to our local Backend
-      const response = await fetch('https://fgo-servants.vercel.app/api', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(servant)
-      });
+      // USE YOUR REAL VERCEL URL HERE
+      // Note: We use GET, not POST
+      const response = await fetch(`https://Fgo-Servants.vercel.app/api/servant/${servant.collectionNo}`);
+
+      if (response.ok) {
+        const translatedData = await response.json();
+        
+        // Merge the new English data with the existing servant object
+        setSelectedServant(prev => ({
+            ...prev,
+            name: translatedData.name,
+            skills: translatedData.skills,
+            noblePhantasms: translatedData.np, // Make sure your backend sends 'np'
+            className: translatedData.className
+        }));
+      } else {
+        console.error("Translation backend failed");
+      }
+    } catch (error) {
+      console.error("Could not connect to translation server", error);
+    } finally {
+      setIsTranslating(false);
+    }
+  };
 
       if (response.ok) {
         const translatedServant = await response.json();
