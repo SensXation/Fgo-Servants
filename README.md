@@ -1,16 +1,59 @@
-# React + Vite
+# Chaldea Database (FGO Servant Tracker)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A responsive React web application that serves as a database for the mobile game *Fate/Grand Order*. It fetches real-time data for both NA and JP servers, providing English translations for Japanese-only content.
 
-Currently, two official plugins are available:
+**🔗 Live Demo:** [View Live Site](https://SensXation.github.io/Fgo-Servants/)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+---
 
-## React Compiler
+## 🚀 Features
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+* **Global Servant Search:** Browse and filter servants by Name and Class.
+* **Hybrid Data Engine:**
+    * Prioritizes **NA Data** for official English translations.
+    * Falls back to **JP Data** for new servants not yet released globally.
+* **Auto-Translation System:** Automatically translates Japanese skill descriptions into English using a custom backend service.
+* **Data Cleaning:** formatting raw API data to remove placeholder variables (e.g., `{{val}}`) and unwrap complex objects for Append Skills.
+* **Detailed Views:** Displays active skills, passive skills, append skills, and Noble Phantasms with correct icons.
 
-## Expanding the ESLint configuration
+---
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## 🛠️ Tech Stack
+
+**Frontend:**
+* React.js (Vite)
+* CSS3 (Custom responsive styling)
+* GitHub Pages (Hosting)
+
+**Backend:**
+* Node.js & Express
+* Axios (Data fetching)
+* Google Translate API (Unofficial helper for translations)
+* Vercel (Serverless Hosting)
+
+**API:**
+* [Atlas Academy API](https://api.atlasacademy.io/) (The source of FGO game data)
+
+---
+
+## 🧩 How It Works
+
+This project solves the "Translation Problem" in FGO data. Since the Japanese version is 2 years ahead of the Global version, many new servants lack English descriptions.
+
+1.  **The Frontend** sends a request to the Vercel Backend.
+2.  **The Backend** first checks the **NA Database**.
+3.  If the servant is missing (JP exclusive), it fetches the **JP Database**.
+4.  It passes the Japanese text through a translation service.
+5.  It cleans up raw code variables (e.g., `{{1:Value:m}}%` → `?%`).
+6.  The clean, English data is sent back to the React App for display.
+
+---
+
+## 📦 Installation & Setup
+
+If you want to run this project locally:
+
+### 1. Clone the repository
+```bash
+git clone [https://github.com/SensXation/Fgo-Servants.git](https://github.com/SensXation/Fgo-Servants.git)
+cd Fgo-Servants
