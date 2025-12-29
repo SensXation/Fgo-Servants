@@ -106,7 +106,7 @@ const App = () => {
 
     try {
       // 2. Send to our local Backend
-      const response = await fetch('https://chaldea-db.vercel.app/api/hello', {
+      const response = await fetch('https://fgo-servants.vercel.app/api/hello', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(servant)
