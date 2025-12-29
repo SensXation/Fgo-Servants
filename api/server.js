@@ -16,18 +16,19 @@ app.get('/api/hello', (req, res) => res.json({ message: 'Connected to Backend!' 
 app.get('/api/servant/:id', async (req, res) => {
     const servantId = req.params.id;
     try {
-        // Fetch English data from Atlas Academy API
         const response = await axios.get(`https://api.atlasacademy.io/export/NA/nice_servant.json`);
         
-        // Find the specific servant by ID (collectionNo)
+        // Find the servant
         const servant = response.data.find(s => s.collectionNo == servantId);
 
         if (servant) {
             res.json({
                 name: servant.name,
                 className: servant.className,
-                skills: servant.skills, // Contains English skill names/descriptions
-                np: servant.noblePhantasms // Contains English NP data
+                skills: servant.skills,           // Active Skills
+                np: servant.noblePhantasms,       // Noble Phantasm
+                classPassive: servant.classPassive, // <--- NEW: Passive Skills
+                appendPassive: servant.appendPassive // <--- NEW: Append Skills
             });
         } else {
             res.status(404).json({ error: "Servant not found in NA database" });

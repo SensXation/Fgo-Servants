@@ -101,19 +101,19 @@ const App = () => {
     setIsTranslating(true);
 
     try {
-      // Using the URL you confirmed is correct
       const response = await fetch(`https://Fgo-Servants.vercel.app/api/servant/${servant.collectionNo}`);
 
       if (response.ok) {
         const translatedData = await response.json();
         
-        // Merge the new English data with the existing servant object
         setSelectedServant(prev => ({
             ...prev,
             name: translatedData.name,
             skills: translatedData.skills,
             noblePhantasms: translatedData.np,
-            className: translatedData.className
+            className: translatedData.className,
+            classPassive: translatedData.classPassive, 
+            appendPassive: translatedData.appendPassive
         }));
       } else {
         console.error("Translation backend failed");
@@ -217,7 +217,6 @@ const App = () => {
                 <h2>
                   {selectedServant.name} 
                   <span className="rarity">{"★".repeat(selectedServant.rarity)}</span>
-                  {isTranslating && <span style={{fontSize: "0.5em", marginLeft: "10px", color: "#00ff00"}}>(Translating...)</span>}
                 </h2>
                 <p className="jp-name">JP Name: {selectedServant.originalName}</p>
                 <div className="stats-grid">
