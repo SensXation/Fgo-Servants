@@ -38,7 +38,7 @@ A responsive React web application that serves as a database for the mobile game
 
 ## 🧩 How It Works
 
-This project solves the "Translation Problem" in FGO data. Since the Japanese version is 2 years ahead of the Global version, many new servants lack English descriptions.
+This project  Translate certain servant in FGO JP data. Since the Japanese version is 2 years ahead of the Global version, many new servants lack English descriptions.
 
 1.  **The Frontend** sends a request to the Vercel Backend.
 2.  **The Backend** first checks the **NA Database**.
