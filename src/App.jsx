@@ -218,7 +218,6 @@ const App = () => {
                 <h2>
                   {selectedServant.name} 
                   <span className="rarity">{"★".repeat(selectedServant.rarity)}</span>
-                  {/* Removed the (Translating...) text here */}
                 </h2>
                 <p className="jp-name">JP Name: {selectedServant.originalName}</p>
                 <div className="stats-grid">

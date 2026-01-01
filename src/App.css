@@ -242,9 +242,8 @@ html, body {
 .no-skill { color: #666; font-style: italic; }
 
 
-/* ========================================= */
-/* MOBILE RESPONSIVE DESIGN (FIXED)          */
-/* ========================================= */
+
+/* MOBILE RESPONSIVE DESIGN*/
 @media (max-width: 768px) {
   /* 1. Reduce Container Padding (Gives more space for cards) */
   .app-container {

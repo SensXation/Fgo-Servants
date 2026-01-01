@@ -5,10 +5,10 @@ const app = express();
 
 app.use(cors());
 
-// --- HELPER 1: Google Translate Function ---
+// Translate function
 async function translateText(text) {
     if (!text || text.trim() === "") return text;
-    // If text is already mostly English (ASCII), skip translation to save speed
+    // If text is already mostly English, skip translation to save speed
     if (/^[\x00-\x7F]*$/.test(text)) return text;
 
     try {
@@ -25,7 +25,7 @@ async function translateText(text) {
     }
 }
 
-// --- HELPER 2: Clean & Translate Skills ---
+//  Clean & Translate  the Skills
 async function processSkills(skillsList, shouldTranslate) {
     if (!skillsList) return [];
     
@@ -36,7 +36,7 @@ async function processSkills(skillsList, shouldTranslate) {
         let detail = realSkill.detail;
 
         // 1. CLEAN: Remove the ugly {{...}} variables FIRST
-        // We replace them with '?' (e.g., "Charge NP by ?%")
+        // replace them with '?' (e.g., "Charge NP by ?%")
         if (detail) {
             detail = detail.replace(/\{\{.*?\}\}/g, '?'); 
         }
@@ -71,7 +71,7 @@ app.get('/api/servant/:id', async (req, res) => {
             console.log(`Servant ${servantId} not in NA. Fetching JP...`);
             const jpResponse = await axios.get(`https://api.atlasacademy.io/nice/JP/servant/${servantId}?lang=en`);
             data = jpResponse.data;
-            isJpSource = true; // Mark as JP so we know to translate it later
+            isJpSource = true; // Mark as JP so translate it later
         } catch (jpError) {
             return res.status(404).json({ error: "Servant not found" });
         }
@@ -79,7 +79,7 @@ app.get('/api/servant/:id', async (req, res) => {
 
     if (data) {
         // Process all skills (Active, NP, Passive, Append)
-        // We pass 'isJpSource' to tell the helper whether to run Google Translate
+        // Pass the 'isJpSource' to tell the helper whether to run Google Translate
         const [cleanSkills, cleanNp, cleanPassive, cleanAppend] = await Promise.all([
             processSkills(data.skills, isJpSource),
             processSkills(data.noblePhantasms, isJpSource),
