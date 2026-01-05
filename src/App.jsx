@@ -16,38 +16,35 @@ const CLASS_ICONS = {
   alterego: "icons/AlterEgo.png",
   foreigner: "icons/Foreigner.webp",
   pretender: "icons/Pretender.webp",
-  beast: "icons/Beast.webp" 
+  beast: "icons/Beast.webp"
 };
 
 const App = () => {
+  
   const [servants, setServants] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedClass, setSelectedClass] = useState("ALL");
+
   
-  // New State for the Modal
   const [selectedServant, setSelectedServant] = useState(null);
   const [isTranslating, setIsTranslating] = useState(false);
 
+  
   useEffect(() => {
-    // Fetch Basic Data
-    const fetchRequest = fetch("https://api.atlasacademy.io/export/JP/nice_servant_lang_en.json")
-      .then((res) => res.json());
-
-    
-
-    Promise.all([fetchRequest])
-      .then(([data]) => {
+    fetch("https://api.atlasacademy.io/export/JP/nice_servant_lang_en.json")
+      .then((res) => res.json())
+      .then((data) => {
         let cleanList = data.filter(s => {
           if (!s.collectionNo || s.collectionNo === 0) return false;
           const isStandard = s.type === "heroine" || s.type === "normal";
-          const isSpecial = s.collectionNo === 444 || s.collectionNo === 417; 
+          const isSpecial = s.collectionNo === 444 || s.collectionNo === 417;
           const isBeast = s.className.toLowerCase() === "beast";
-          return isStandard || isBeast || isSpecial; 
+          return isStandard || isBeast || isSpecial;
         });
 
         cleanList = cleanList.map(s => {
-          if (s.collectionNo === 444) return { ...s, className: "beast" }; 
+          if (s.collectionNo === 444) return { ...s, className: "beast" };
           if (s.collectionNo === 417) return { ...s, className: "beast" };
           return s;
         });
@@ -59,6 +56,7 @@ const App = () => {
       .catch((err) => console.error("Error fetching data:", err));
   }, []);
 
+  
   const filteredServants = useMemo(() => {
     return servants.filter((s) => {
       const name = s.name ? s.name.toLowerCase() : "";
@@ -74,50 +72,52 @@ const App = () => {
     return servants.filter(s => s.name && s.name.toLowerCase().includes(searchTerm.toLowerCase()));
   }, [servants, searchTerm]);
 
+ 
   const capitalize = (s) => s ? s.charAt(0).toUpperCase() + s.slice(1) : "";
 
-  // --- TRAIT CLEANER ---
+  
+  const getRarityClass = (rarity) => {
+    if (rarity >= 4) return "gold";   
+    if (rarity === 3) return "silver"; 
+    return "bronze";                   
+  };
+
   const formatTrait = (rawName) => {
     const IGNORED = [
-      "servant", "canbeinbattle", "unknown", "fivestarservant", 
+      "servant", "canbeinbattle", "unknown", "fivestarservant",
       "fourstarservant", "threestarservant", "twostarservant", "onestarservant",
       "costumeowning"
     ];
     if (!rawName || IGNORED.includes(rawName.toLowerCase())) return null;
 
     let name = rawName
-      .replace(/^gender/i, '')       
-      .replace(/^attribute/i, '')    
-      .replace(/^alignment/i, '')    
-      .replace(/^class/i, '');       
+      .replace(/^gender/i, '')
+      .replace(/^attribute/i, '')
+      .replace(/^alignment/i, '')
+      .replace(/^class/i, '');
 
     name = name.replace(/([a-z])([A-Z])/g, '$1 $2');
     return name.charAt(0).toUpperCase() + name.slice(1).trim();
   };
 
-  // --- HANDLE CLICK (Fixed Translation Merge) ---
- const handleServantClick = async (servant) => {
+  
+  const handleServantClick = async (servant) => {
     setSelectedServant(servant);
     setIsTranslating(true);
 
     try {
       const response = await fetch(`https://Fgo-Servants.vercel.app/api/servant/${servant.collectionNo}`);
-
       if (response.ok) {
         const translatedData = await response.json();
-        
         setSelectedServant(prev => ({
-            ...prev,
-            name: translatedData.name,
-            skills: translatedData.skills,
-            noblePhantasms: translatedData.np,
-            className: translatedData.className,
-            classPassive: translatedData.classPassive, 
-            
-            appendPassive: translatedData.appendPassive || [] 
+          ...prev,
+          name: translatedData.name,
+          skills: translatedData.skills,
+          noblePhantasms: translatedData.np,
+          className: translatedData.className,
+          classPassive: translatedData.classPassive,
+          appendPassive: translatedData.appendPassive || []
         }));
-      } else {
-        console.error("Translation backend failed");
       }
     } catch (error) {
       console.error("Could not connect to translation server", error);
@@ -127,9 +127,10 @@ const App = () => {
   };
 
   const getSkillIcon = (iconUrl) => {
-      return iconUrl ? iconUrl : "https://static.atlasacademy.io/JP/Items/5.png";
+    return iconUrl ? iconUrl : "https://static.atlasacademy.io/JP/Items/5.png";
   };
 
+  
   if (loading) return (
     <div className="loading-screen">
       <div className="loading-text">Loading Chaldea Database</div>
@@ -137,15 +138,17 @@ const App = () => {
     </div>
   );
 
+  
   return (
     <div className="app-container">
+      
       <header className="main-header">
         <div className="logo-section"><h1>Chaldea Database</h1></div>
         <div className="search-section">
           <div className="search-wrapper">
-            <input 
-              type="text" 
-              placeholder="Search Servant Name..." 
+            <input
+              type="text"
+              placeholder="Search Servant Name..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="search-bar"
@@ -162,7 +165,7 @@ const App = () => {
                       </div>
                     </div>
                   ))
-                ) : ( <div className="dropdown-empty">No Servant Found</div> )}
+                ) : (<div className="dropdown-empty">No Servant Found</div>)}
               </div>
             )}
           </div>
@@ -171,9 +174,14 @@ const App = () => {
 
       <div className="filter-container">
         <div className="class-filter-bar">
-          <button className={selectedClass === "ALL" ? "active" : ""} onClick={() => setSelectedClass("ALL")}>ALL</button>
+          <button 
+            className={selectedClass === "ALL" ? "active" : ""} 
+            onClick={() => setSelectedClass("ALL")}
+          >
+            ALL
+          </button>
           {Object.keys(CLASS_ICONS).map((className) => (
-            <button 
+            <button
               key={className}
               className={selectedClass === className.toUpperCase() ? "active" : ""}
               onClick={() => setSelectedClass(className.toUpperCase())}
@@ -185,20 +193,29 @@ const App = () => {
         </div>
       </div>
 
+     
       <div className="servant-grid">
         {filteredServants.map((servant) => (
-          <div key={servant.id} className="servant-card" onClick={() => handleServantClick(servant)}>
+          <div 
+            key={servant.id} 
+            className={`servant-card ${getRarityClass(servant.rarity)}`} 
+            onClick={() => handleServantClick(servant)}
+          >
             <div className="card-face">
-              <img 
-                src={servant.extraAssets?.faces?.ascension?.[4] || servant.extraAssets?.faces?.ascension?.[1] || "https://static.atlasacademy.io/JP/Faces/1001000.png"} 
-                alt={servant.name} 
-                loading="lazy" 
+              <img
+                src={servant.extraAssets?.faces?.ascension?.[4] || servant.extraAssets?.faces?.ascension?.[1] || "https://static.atlasacademy.io/JP/Faces/1001000.png"}
+                alt={servant.name}
+                loading="lazy"
               />
             </div>
             <div className="card-info">
               <div className="card-name">{servant.name}</div>
               <div className="card-class-icon">
-                <img src={CLASS_ICONS[servant.className?.toLowerCase()] || CLASS_ICONS.shielder} alt={servant.className} onError={(e) => {e.target.style.display = 'none'}} />
+                <img 
+                  src={CLASS_ICONS[servant.className?.toLowerCase()] || CLASS_ICONS.shielder} 
+                  alt={servant.className} 
+                  onError={(e) => { e.target.style.display = 'none' }} 
+                />
               </div>
             </div>
           </div>
@@ -209,17 +226,15 @@ const App = () => {
         <div className="modal-overlay" onClick={() => setSelectedServant(null)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <button className="close-btn" onClick={() => setSelectedServant(null)}>×</button>
-            
+
             <div className="detail-header">
               <div className="servant-portrait">
                 <img src={selectedServant.extraAssets?.charaGraph?.ascension?.[4] || selectedServant.extraAssets?.charaGraph?.ascension?.[3] || selectedServant.extraAssets?.charaGraph?.ascension?.[1]} alt="Portrait" />
               </div>
               <div className="servant-info">
-                <h2>
-                  {selectedServant.name} 
-                  <span className="rarity">{"★".repeat(selectedServant.rarity)}</span>
-                </h2>
+                <h2>{selectedServant.name} <span className="rarity">{"★".repeat(selectedServant.rarity)}</span></h2>
                 <p className="jp-name">JP Name: {selectedServant.originalName}</p>
+                
                 <div className="stats-grid">
                   <div className="stat-box"><strong>ID:</strong> {Math.floor(selectedServant.collectionNo)}</div>
                   <div className="stat-box"><strong>Class:</strong> {capitalize(selectedServant.className)}</div>
@@ -228,7 +243,7 @@ const App = () => {
                   <div className="stat-box"><strong>Attr:</strong> {capitalize(selectedServant.attribute)}</div>
                   <div className="stat-box"><strong>Cost:</strong> {selectedServant.cost}</div>
                 </div>
-                
+
                 <div className="traits-box">
                   <strong>Traits:</strong>
                   <div className="tags">
@@ -247,10 +262,7 @@ const App = () => {
                 {selectedServant.skills?.map((skill, idx) => (
                   <div key={idx} className="skill-unit">
                     <img src={getSkillIcon(skill.icon)} alt={skill.name} />
-                    <div className="skill-text">
-                        <h4>{skill.name}</h4>
-                        <p>{skill.detail}</p>
-                    </div>
+                    <div className="skill-text"><h4>{skill.name}</h4><p>{skill.detail}</p></div>
                   </div>
                 ))}
               </div>
@@ -260,10 +272,7 @@ const App = () => {
                 {selectedServant.classPassive?.map((skill, idx) => (
                   <div key={idx} className="skill-unit passive">
                     <img src={getSkillIcon(skill.icon)} alt={skill.name} />
-                    <div className="skill-text">
-                        <h4>{skill.name}</h4>
-                        <p>{skill.detail}</p>
-                    </div>
+                    <div className="skill-text"><h4>{skill.name}</h4><p>{skill.detail}</p></div>
                   </div>
                 ))}
               </div>
@@ -271,22 +280,19 @@ const App = () => {
               <h3>Append Skills</h3>
               <div className="skill-row">
                 {selectedServant.appendPassive && selectedServant.appendPassive.length > 0 ? (
-                   selectedServant.appendPassive.map((skill, idx) => (
-                      <div key={idx} className="skill-unit append">
-                        <img src={getSkillIcon(skill.icon)} alt={skill.name} />
-                        <div className="skill-text">
-                            <h4>{skill.name}</h4>
-                            <p>{skill.detail}</p>
-                        </div>
-                      </div>
+                  selectedServant.appendPassive.map((skill, idx) => (
+                    <div key={idx} className="skill-unit append">
+                      <img src={getSkillIcon(skill.icon)} alt={skill.name} />
+                      <div className="skill-text"><h4>{skill.name}</h4><p>{skill.detail}</p></div>
+                    </div>
                   ))
                 ) : (<p className="no-skill">No Append Skills available.</p>)}
               </div>
             </div>
+
           </div>
         </div>
       )}
-
     </div>
   );
 };
