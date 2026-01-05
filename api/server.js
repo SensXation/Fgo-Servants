@@ -34,6 +34,7 @@ async function processSkills(skillsList, shouldTranslate) {
         const realSkill = skill.skill ? skill.skill : skill; 
         
         let detail = realSkill.detail;
+        let name = realSkill.name;
 
         // 1. CLEAN: Remove the ugly {{...}} variables FIRST
         // replace them with '?' (e.g., "Charge NP by ?%")
@@ -46,8 +47,13 @@ async function processSkills(skillsList, shouldTranslate) {
             detail = await translateText(detail);
         }
 
+        if (name) {
+                name = await translateText(name);
+            }
+
         return {
             ...realSkill,
+            name: name,
             detail: detail
         };
     }));

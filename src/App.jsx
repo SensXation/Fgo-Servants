@@ -34,9 +34,9 @@ const App = () => {
     const fetchRequest = fetch("https://api.atlasacademy.io/export/JP/nice_servant_lang_en.json")
       .then((res) => res.json());
 
-    const delayTimer = new Promise(resolve => setTimeout(resolve, 2500));
+    
 
-    Promise.all([fetchRequest, delayTimer])
+    Promise.all([fetchRequest])
       .then(([data]) => {
         let cleanList = data.filter(s => {
           if (!s.collectionNo || s.collectionNo === 0) return false;
